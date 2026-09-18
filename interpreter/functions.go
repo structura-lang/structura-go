@@ -4,14 +4,14 @@ import (
 	"fmt"
 )
 
-type Function struct {
-	FInputs     []string              `json:"inputs"`
-	FVariables  map[string]Expression `json:"variables"`
-	FOperations []Operation           `json:"operations"`
-	FOutput     Expression            `json:"output"`
+type function struct {
+	FInputs     []string              `structura:"inputs"`
+	FVariables  map[string]expression `structura:"variables"`
+	FOperations []operation           `structura:"operations"`
+	FOutput     expression            `structura:"output"`
 }
 
-func (f Function) evaluate(inputs map[string]any) (any, error) {
+func (f function) evaluate(inputs map[string]any) (any, error) {
 	// validate inputs
 	for _, inputName := range f.FInputs {
 		_, hasValue := inputs[inputName]

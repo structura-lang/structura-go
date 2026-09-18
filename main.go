@@ -33,7 +33,7 @@ func main() {
 		log.Fatalf("failed to read data file: %v", err)
 	}
 
-	var p interpreter.Function
+	var p map[string]any
 	if err := json.Unmarshal(programBytes, &p); err != nil {
 		log.Fatalf("failed to unmarshal into Function: %v", err)
 	}

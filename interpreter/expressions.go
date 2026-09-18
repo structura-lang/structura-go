@@ -2,9 +2,9 @@ package interpreter
 
 import "fmt"
 
-type Expression struct {
-	EType string `json:"type"`
-	EData any    `json:"data"`
+type expression struct {
+	EType string `structura:"type"`
+	EData any    `structura:"data"`
 }
 
 type parentVariables struct {
@@ -12,7 +12,7 @@ type parentVariables struct {
 	variables map[string]any
 }
 
-func (e Expression) evaluate(pv parentVariables) (any, error) {
+func (e expression) evaluate(pv parentVariables) (any, error) {
 	switch e.EType {
 	case "literal":
 		return e.EData, nil

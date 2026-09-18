@@ -1,9 +1,17 @@
 package interpreter
 
-import "fmt"
+import (
+	"fmt"
+	"structura/util"
+)
 
-func Execute(program Function, inputs map[string]any) (any, error) {
-	fmt.Printf("%+v\n", program)
+func Execute(program map[string]any, inputs map[string]any) (any, error) {
+	function, err := util.MapToStruct[function](program, "structura")
+	if err != nil {
+		return nil, err
+	}
 
-	return program.evaluate(inputs)
+	fmt.Printf("%+v\n", function)
+
+	return function.evaluate(inputs)
 }

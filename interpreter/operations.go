@@ -1,4 +1,4 @@
 package interpreter
 
-type Operation struct {
+type operation struct {
 }
