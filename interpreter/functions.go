@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"structura/util"
 )
 
 type function struct {
@@ -51,4 +52,13 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	}
 
 	return eval, nil
+}
+
+func evalMapFunction(fn map[string]any, inputs map[string]any) (any, error) {
+	function, err := util.MapToStruct[function](fn, "structura")
+	if err != nil {
+		return nil, err
+	}
+
+	return function.evaluate(inputs)
 }
