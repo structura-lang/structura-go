@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"strings"
 	"structura/util"
 )
 
@@ -45,6 +46,50 @@ func (e expression) evaluate(pv parentVariables) (any, error) {
 		}
 
 		return input, nil
+
+	case "get":
+		data, ok := e.EData.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("`data` field is not a map!")
+		}
+
+		raw_from, exists := data["from"]
+		if !exists {
+			return nil, fmt.Errorf("`from` expression missing!")
+		}
+
+		from, err := evalAnyExpression[map[string]any](raw_from, pv)
+		if err != nil {
+			return nil, err
+		}
+
+		raw_paths, exists := data["path"]
+		if !exists {
+			return nil, fmt.Errorf("`path` expressions missing!")
+		}
+
+		paths, ok := raw_paths.([]any)
+		if !ok {
+			return nil, fmt.Errorf("`path` field is not a list of expressions!")
+		}
+
+		builtPath := []string{}
+
+		for _, path := range paths {
+			segment, err := evalAnyExpression[string](path, pv)
+			if err != nil {
+				return nil, err
+			}
+
+			builtPath = append(builtPath, segment)
+		}
+
+		result, ok := util.GetPath(from, builtPath)
+		if !ok {
+			return nil, fmt.Errorf("Failed getting object at path `%s`", strings.Join(builtPath, "/"))
+		}
+
+		return result, nil
 
 	case "call":
 		data, ok := e.EData.(map[string]any)
