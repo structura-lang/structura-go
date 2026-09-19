@@ -60,7 +60,7 @@ func (e expression) evaluate(pv parentVariables) (any, error) {
 
 		from, err := evalAnyExpression[map[string]any](raw_from, pv)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("EXP[from]: %w", err)
 		}
 
 		raw_paths, exists := data["path"]
@@ -75,10 +75,10 @@ func (e expression) evaluate(pv parentVariables) (any, error) {
 
 		builtPath := []string{}
 
-		for _, path := range paths {
+		for i, path := range paths {
 			segment, err := evalAnyExpression[string](path, pv)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("EXP[path/%d]: %w", i, err)
 			}
 
 			builtPath = append(builtPath, segment)
@@ -104,7 +104,7 @@ func (e expression) evaluate(pv parentVariables) (any, error) {
 
 		fn, err := evalAnyExpression[map[string]any](rawFunction, pv)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("EXP[function]: %w", err)
 		}
 
 		rawInputExpressions, exists := data["inputs_from"]
@@ -119,7 +119,7 @@ func (e expression) evaluate(pv parentVariables) (any, error) {
 		for input, exp := range inputExpressions {
 			res, err := evalAnyExpression[any](exp, pv)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("EXP[inputs_from]: %w", err)
 			}
 
 			inputs[input] = res
