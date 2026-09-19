@@ -63,30 +63,24 @@ func (e expression) evaluate(pv parentVariables) (any, error) {
 			return nil, fmt.Errorf("EXP[from]: %w", err)
 		}
 
-		raw_paths, exists := data["path"]
+		raw_path, exists := data["path"]
 		if !exists {
 			return nil, fmt.Errorf("`path` expressions missing!")
 		}
 
-		paths, ok := raw_paths.([]any)
-		if !ok {
-			return nil, fmt.Errorf("`path` field is not a list of expressions!")
+		path, err := evalAnyExpression[[]any](raw_path, pv)
+		if err != nil {
+			return nil, fmt.Errorf("EXP[path]: %w", err)
 		}
 
-		builtPath := []string{}
-
-		for i, path := range paths {
-			segment, err := evalAnyExpression[string](path, pv)
-			if err != nil {
-				return nil, fmt.Errorf("EXP[path/%d]: %w", i, err)
-			}
-
-			builtPath = append(builtPath, segment)
+		castPath, err := util.CastSlice[string](path)
+		if err != nil {
+			return nil, err
 		}
 
-		result, ok := util.GetPath(from, builtPath)
+		result, ok := util.GetPath(from, castPath)
 		if !ok {
-			return nil, fmt.Errorf("Failed getting object at path `%s`", strings.Join(builtPath, "/"))
+			return nil, fmt.Errorf("Failed getting object at path `%s`", strings.Join(castPath, "/"))
 		}
 
 		return result, nil
