@@ -28,13 +28,13 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 
 	var iVariables map[string]any = map[string]any{}
 
-	pvVar := parentVariables{
+	pv := parentVariables{
 		inputs:    inputs,
 		variables: iVariables,
 	}
 
 	for varName, varExp := range f.FVariables {
-		eval, err := varExp.evaluate(pvVar)
+		eval, err := varExp.evaluate(pv)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[var:%s]: %w", varName, err)
 		}
@@ -43,23 +43,13 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	}
 
 	for i, operation := range f.FOperations {
-		pvOp := parentVariables{
-			inputs:    inputs,
-			variables: iVariables,
-		}
-
-		err := operation.evaluate(pvOp)
+		err := operation.evaluate(pv)
 		if err != nil {
 			return nil, fmt.Errorf("OP[%d]: %w", i, err)
 		}
 	}
 
-	pvOut := parentVariables{
-		inputs:    inputs,
-		variables: iVariables,
-	}
-
-	eval, err := f.FOutput.evaluate(pvOut)
+	eval, err := f.FOutput.evaluate(pv)
 	if err != nil {
 		return nil, fmt.Errorf("EXP[out]: %w", err)
 	}
