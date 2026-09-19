@@ -12,6 +12,11 @@ type function struct {
 	FOutput     expression            `structura:"output"`
 }
 
+type parentVariables struct {
+	inputs    map[string]any
+	variables map[string]any
+}
+
 func (f function) evaluate(inputs map[string]any) (any, error) {
 	// validate inputs
 	for _, inputName := range f.FInputs {
@@ -37,9 +42,17 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 		iVariables[varName] = eval
 	}
 
-	//	for _, operation := range f.FOperations {
-	//		// TODO
-	//	}
+	for i, operation := range f.FOperations {
+		pvOp := parentVariables{
+			inputs:    inputs,
+			variables: iVariables,
+		}
+
+		err := operation.evaluate(pvOp)
+		if err != nil {
+			return nil, fmt.Errorf("OP[%d]: %w", i, err)
+		}
+	}
 
 	pvOut := parentVariables{
 		inputs:    inputs,

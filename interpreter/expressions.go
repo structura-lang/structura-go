@@ -11,11 +11,6 @@ type expression struct {
 	EData any    `structura:"data"`
 }
 
-type parentVariables struct {
-	inputs    map[string]any
-	variables map[string]any
-}
-
 func (e expression) evaluate(pv parentVariables) (any, error) {
 	switch e.EType {
 	case "literal":
