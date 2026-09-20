@@ -3,7 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"strings"
-	"structura/util"
+	"structura/interpreter/util"
 )
 
 type expression struct {

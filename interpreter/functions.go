@@ -2,7 +2,7 @@ package interpreter
 
 import (
 	"fmt"
-	"structura/util"
+	"structura/interpreter/util"
 )
 
 type function struct {
