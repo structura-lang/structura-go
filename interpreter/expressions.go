@@ -72,7 +72,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			return nil, fmt.Errorf("`path` or `index` expressions missing!")
 		}
 
-		// object is array
+		// object is map
 		if pExists {
 			fromMap, ok := from.(map[string]any)
 			if !ok {
@@ -86,7 +86,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 
 			castPath, err := util.CastSlice[string](path)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("EXP[path]: %w", err)
 			}
 
 			result, ok := util.GetPath(fromMap, castPath)
@@ -97,6 +97,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			return result, nil
 		}
 
+		// object is array
 		if iExists {
 			fromArray, ok := from.([]any)
 			if !ok {
