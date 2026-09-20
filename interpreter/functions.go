@@ -13,8 +13,8 @@ type function struct {
 }
 
 type parentVariables struct {
-	inputs    map[string]any
-	variables map[string]any
+	Inputs    map[string]any
+	Variables map[string]any
 }
 
 func (f function) evaluate(inputs map[string]any) (any, error) {
@@ -29,8 +29,8 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	var iVariables map[string]any = map[string]any{}
 
 	pv := parentVariables{
-		inputs:    inputs,
-		variables: iVariables,
+		Inputs:    util.MakeCopy(inputs),
+		Variables: iVariables,
 	}
 
 	for varName, varExp := range f.FVariables {

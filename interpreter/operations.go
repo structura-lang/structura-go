@@ -36,7 +36,7 @@ func (o operation) evaluate(pv parentVariables) error {
 			return fmt.Errorf("`arguments/output_to` field is not a string!")
 		}
 
-		pv.variables[outputTo] = value
+		pv.Variables[outputTo].(map[string]any)["out"] = value
 
 		return nil
 
