@@ -30,17 +30,17 @@ func (o operation) evaluate(pv parentVariables) error {
 			return fmt.Errorf("EXP[arguments/value]: %w", err)
 		}
 
-		rawOutputTo, exists := arguments["output_to"]
+		targetExp, exists := arguments["target_var"]
 		if !exists {
-			return fmt.Errorf("`arguments/output_to` string missing!")
+			return fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
-		outputTo, ok := rawOutputTo.(string)
-		if !ok {
-			return fmt.Errorf("`arguments/output_to` field is not a string!")
+		target, err := evalAnyExpression[string](targetExp, pv)
+		if err != nil {
+			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
 
-		pv.Variables[outputTo] = value
+		pv.Variables[target] = value
 
 		return nil
 
@@ -72,14 +72,14 @@ func (o operation) evaluate(pv parentVariables) error {
 			return fmt.Errorf("`path` or `index` expressions missing!")
 		}
 
-		rawTarget, exists := arguments["target"]
+		targetExp, exists := arguments["target_var"]
 		if !exists {
-			return fmt.Errorf("`arguments/target` string missing!")
+			return fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
-		target, ok := rawTarget.(string)
-		if !ok {
-			return fmt.Errorf("`arguments/target` field is not a string!")
+		target, err := evalAnyExpression[string](targetExp, pv)
+		if err != nil {
+			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
 
 		// object is map
