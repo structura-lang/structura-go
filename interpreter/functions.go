@@ -18,18 +18,22 @@ type parentVariables struct {
 }
 
 func (f function) evaluate(inputs map[string]any) (any, error) {
+	var iInputs map[string]any = map[string]any{}
+
 	// validate inputs
 	for _, inputName := range f.FInputs {
-		_, hasValue := inputs[inputName]
+		input, hasValue := inputs[inputName]
 		if !hasValue {
 			return nil, fmt.Errorf("Input %s missing!", inputName)
 		}
+
+		iInputs[inputName] = input
 	}
 
 	var iVariables map[string]any = map[string]any{}
 
 	pv := parentVariables{
-		Inputs:    util.MakeCopy(inputs),
+		Inputs:    util.MakeCopy(iInputs),
 		Variables: iVariables,
 	}
 
