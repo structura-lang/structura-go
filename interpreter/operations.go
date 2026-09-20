@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"math"
+	"strings"
 	"structura/interpreter/util"
 )
 
@@ -101,7 +102,7 @@ func (o operation) evaluate(pv parentVariables) error {
 
 			ok = util.SetPath(targetMap, castPath, value)
 			if !ok {
-				return fmt.Errorf("Error setting value of %s at %s!")
+				return fmt.Errorf("Error setting value of variable %s at %s!", target, strings.Join(castPath, "/"))
 			}
 
 			return nil
@@ -125,8 +126,8 @@ func (o operation) evaluate(pv parentVariables) error {
 
 			index := int(fIndex)
 
-			if !(index >= 0) {
-				return fmt.Errorf("EXP[index]: value out of bounds!")
+			if index < 0 || index >= len(targetArray) {
+				return fmt.Errorf("EXP[index]: index out of range!")
 			}
 
 			targetArray[index] = value
