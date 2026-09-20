@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"structura/interpreter/util"
 )
@@ -55,32 +56,72 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			return nil, fmt.Errorf("`from` expression missing!")
 		}
 
-		from, err := evalAnyExpression[map[string]any](raw_from, pv)
+		from, err := evalAnyExpression[any](raw_from, pv)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[from]: %w", err)
 		}
 
-		raw_path, exists := data["path"]
-		if !exists {
-			return nil, fmt.Errorf("`path` expressions missing!")
+		raw_path, pExists := data["path"]
+		raw_index, iExists := data["index"]
+
+		if pExists && iExists {
+			return nil, fmt.Errorf("`path` and `index` are mutually exclusive!")
 		}
 
-		path, err := evalAnyExpression[[]any](raw_path, pv)
-		if err != nil {
-			return nil, fmt.Errorf("EXP[path]: %w", err)
+		if !pExists && !iExists {
+			return nil, fmt.Errorf("`path` or `index` expressions missing!")
 		}
 
-		castPath, err := util.CastSlice[string](path)
-		if err != nil {
-			return nil, err
+		// object is array
+		if pExists {
+			fromMap, ok := from.(map[string]any)
+			if !ok {
+				return nil, fmt.Errorf("`from` expression returned invalid type!")
+			}
+
+			path, err := evalAnyExpression[[]any](raw_path, pv)
+			if err != nil {
+				return nil, fmt.Errorf("EXP[path]: %w", err)
+			}
+
+			castPath, err := util.CastSlice[string](path)
+			if err != nil {
+				return nil, err
+			}
+
+			result, ok := util.GetPath(fromMap, castPath)
+			if !ok {
+				return nil, fmt.Errorf("Failed getting object at path `%s`", strings.Join(castPath, "/"))
+			}
+
+			return result, nil
 		}
 
-		result, ok := util.GetPath(from, castPath)
-		if !ok {
-			return nil, fmt.Errorf("Failed getting object at path `%s`", strings.Join(castPath, "/"))
+		if iExists {
+			fromArray, ok := from.([]any)
+			if !ok {
+				return nil, fmt.Errorf("`from` expression returned invalid type!")
+			}
+
+			fIndex, err := evalAnyExpression[float64](raw_index, pv)
+			if err != nil {
+				return nil, fmt.Errorf("EXP[index]: %w", err)
+			}
+
+			if !(fIndex == math.Trunc(fIndex)) {
+				return nil, fmt.Errorf("EXP[index]: value is not an integer!")
+			}
+
+			index := int(fIndex)
+
+			if !(index >= 0) {
+				return nil, fmt.Errorf("EXP[index]: value out of bounds!")
+			}
+
+			return fromArray[index], nil
 		}
 
-		return result, nil
+		return nil, fmt.Errorf("This error should be unreachable. How did you get here?")
 
 	case "call":
 		data, ok := e.EData.(map[string]any)
