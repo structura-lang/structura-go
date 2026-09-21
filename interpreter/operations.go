@@ -112,7 +112,7 @@ func (o operation) evaluate(pv parentVariables) error {
 		if iExists {
 			targetArray, ok := pv.Variables[target].([]any)
 			if !ok {
-				return fmt.Errorf("Variable `target` is not a array!")
+				return fmt.Errorf("Variable `target` is not an array!")
 			}
 
 			fIndex, err := evalAnyExpression[float64](raw_index, pv)
@@ -136,6 +136,44 @@ func (o operation) evaluate(pv parentVariables) error {
 		}
 
 		return fmt.Errorf("This error should be unreachable. How did you get here?")
+
+	case "append":
+		arguments := o.OArguments
+
+		if arguments == nil {
+			return fmt.Errorf("`arguments` field missing!")
+		}
+
+		valueExp, exists := arguments["value"]
+		if !exists {
+			return fmt.Errorf("`arguments/value` expression missing!")
+		}
+
+		value, err := evalAnyExpression[any](valueExp, pv)
+		if err != nil {
+			return fmt.Errorf("EXP[arguments/value]: %w", err)
+		}
+
+		targetExp, exists := arguments["target_var"]
+		if !exists {
+			return fmt.Errorf("`arguments/target_var` expression missing!")
+		}
+
+		target, err := evalAnyExpression[string](targetExp, pv)
+		if err != nil {
+			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
+		}
+
+		targetArray, ok := pv.Variables[target].([]any)
+		if !ok {
+			return fmt.Errorf("Variable `target` is not an array!")
+		}
+
+		targetArray = append(targetArray, value)
+
+		pv.Variables[target] = targetArray
+
+		return nil
 
 	default:
 		return fmt.Errorf("Unknown operation type: %s", o.OType)
