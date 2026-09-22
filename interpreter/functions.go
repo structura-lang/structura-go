@@ -30,20 +30,25 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 		iInputs[inputName] = input
 	}
 
-	var iVariables map[string]any = map[string]any{}
-
-	pv := parentVariables{
+	inputsPV := parentVariables{
 		Inputs:    util.MakeCopy(iInputs),
-		Variables: iVariables,
+		Variables: map[string]any{},
 	}
 
+	var iVariables map[string]any = map[string]any{}
+
 	for varName, varExp := range f.FVariables {
-		eval, err := varExp.evaluate(pv)
+		eval, err := varExp.evaluate(inputsPV)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[var:%s]: %w", varName, err)
 		}
 
 		iVariables[varName] = eval
+	}
+
+	pv := parentVariables{
+		Inputs:    util.MakeCopy(iInputs),
+		Variables: iVariables,
 	}
 
 	for i, operation := range f.FOperations {

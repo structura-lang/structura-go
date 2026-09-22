@@ -41,6 +41,11 @@ func (o operation) evaluate(pv parentVariables) error {
 			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
 
+		_, targetExists := pv.Variables[target]
+		if !targetExists {
+			return fmt.Errorf("Target variable does not exist!")
+		}
+
 		pv.Variables[target] = value
 
 		return nil
