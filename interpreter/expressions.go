@@ -115,7 +115,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 
 			index := int(fIndex)
 
-			if !(index >= 0) {
+			if index < 0 || index >= len(fromArray) {
 				return nil, fmt.Errorf("EXP[index]: value out of bounds!")
 			}
 
