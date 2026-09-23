@@ -15,6 +15,7 @@ type function struct {
 type parentVariables struct {
 	Inputs    map[string]any
 	Variables map[string]any
+	Other     map[string]any
 }
 
 func (f function) evaluate(inputs map[string]any) (any, error) {

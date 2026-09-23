@@ -165,6 +165,29 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 
 		return res, nil
 
+	case "loop":
+		loopObj, ok := e.EData.(string)
+		if !ok {
+			return nil, fmt.Errorf("`data` field is not a string!")
+		}
+
+		rawLoopData, exists := pv.Other["loop"]
+		if !exists {
+			return nil, fmt.Errorf("Cannot evaluate `loop` expression outside loop!")
+		}
+
+		loopData, ok := rawLoopData.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("Invalid loop data!")
+		}
+
+		result, exists := loopData[loopObj]
+		if !exists {
+			return nil, fmt.Errorf("Loop object `%s` does not exist!", loopObj)
+		}
+
+		return result, nil
+
 	default:
 		return nil, fmt.Errorf("Unknown expression type: %s", e.EType)
 	}

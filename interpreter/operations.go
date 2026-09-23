@@ -277,6 +277,55 @@ func (o operation) evaluate(pv parentVariables) error {
 
 		return nil
 
+	case "for_each":
+		arguments := o.OArguments
+
+		if arguments == nil {
+			return fmt.Errorf("`arguments` field missing!")
+		}
+
+		inExp, exists := arguments["in"]
+		if !exists {
+			return fmt.Errorf("`arguments/in` expression missing!")
+		}
+
+		in, err := evalAnyExpression[[]any](inExp, pv)
+		if err != nil {
+			return fmt.Errorf("EXP[arguments/in]: %w", err)
+		}
+
+		rawOperations, exists := arguments["operations"]
+		if !exists {
+			return fmt.Errorf("`arguments/operations` expression missing!")
+		}
+
+		operations, ok := rawOperations.([]any)
+		if !ok {
+			return fmt.Errorf("`arguments/operations` is not a list of expressions!")
+		}
+
+		for index, item := range in {
+			newPv := parentVariables{
+				Inputs:    pv.Inputs,
+				Variables: pv.Variables,
+				Other: map[string]any{
+					"loop": map[string]any{
+						"index": index,
+						"item":  item,
+					},
+				},
+			}
+
+			for _, op := range operations {
+				err := evalAnyOperation(op, newPv)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+
 	default:
 		return fmt.Errorf("Unknown operation type: %s", o.OType)
 	}
