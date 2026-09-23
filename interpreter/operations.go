@@ -17,6 +17,7 @@ type returnReason int
 const (
 	rDone returnReason = iota
 	rError
+	rReturn
 )
 
 func (o operation) evaluate(pv parentVariables) (returnReason, error) {
@@ -208,16 +209,24 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 
 		if condition {
 			for _, op := range thenOperations {
-				_, err := evalAnyOperation(op, pv)
+				reason, err := evalAnyOperation(op, pv)
 				if err != nil {
 					return rError, err
+				}
+
+				if reason != rDone {
+					return reason, nil
 				}
 			}
 		} else {
 			for _, op := range elseOperations {
-				_, err := evalAnyOperation(op, pv)
+				reason, err := evalAnyOperation(op, pv)
 				if err != nil {
 					return rError, err
+				}
+
+				if reason != rDone {
+					return reason, nil
 				}
 			}
 		}
@@ -251,9 +260,13 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			}
 
 			for _, op := range operations {
-				_, err := evalAnyOperation(op, pv)
+				reason, err := evalAnyOperation(op, pv)
 				if err != nil {
 					return rError, err
+				}
+
+				if reason == rReturn {
+					return rReturn, nil
 				}
 			}
 		}
@@ -294,14 +307,21 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			}
 
 			for _, op := range operations {
-				_, err := evalAnyOperation(op, newPv)
+				reason, err := evalAnyOperation(op, newPv)
 				if err != nil {
 					return rError, err
+				}
+
+				if reason == rReturn {
+					return rReturn, nil
 				}
 			}
 		}
 
 		return rDone, nil
+
+	case "return":
+		return rReturn, nil
 
 	default:
 		return rError, fmt.Errorf("Unknown operation type: %s", o.OType)

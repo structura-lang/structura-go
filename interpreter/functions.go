@@ -58,6 +58,10 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 			return nil, fmt.Errorf("OP[%d]: %w", i, err)
 		}
 
+		if reason == rReturn {
+			break
+		}
+
 		if reason != rDone {
 			return nil, fmt.Errorf("OP[%d]: Invalid return reason!", i)
 		}
