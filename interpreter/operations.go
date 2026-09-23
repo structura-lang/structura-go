@@ -18,6 +18,8 @@ const (
 	rDone returnReason = iota
 	rError
 	rReturn
+	rBreak
+	rContinue
 )
 
 func (o operation) evaluate(pv parentVariables) (returnReason, error) {
@@ -249,6 +251,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/operations` is not a list of expressions!")
 		}
 
+	outer_while:
 		for {
 			condition, err := evalAnyExpression[bool](conditionExp, pv)
 			if err != nil {
@@ -267,6 +270,14 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 
 				if reason == rReturn {
 					return rReturn, nil
+				}
+
+				if reason == rBreak {
+					break outer_while
+				}
+
+				if reason == rContinue {
+					continue outer_while
 				}
 			}
 		}
@@ -294,6 +305,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/operations` is not a list of expressions!")
 		}
 
+	outer_for:
 		for index, item := range in {
 			newPv := parentVariables{
 				Inputs:    pv.Inputs,
@@ -315,6 +327,14 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 				if reason == rReturn {
 					return rReturn, nil
 				}
+
+				if reason == rBreak {
+					break outer_for
+				}
+
+				if reason == rContinue {
+					continue outer_for
+				}
 			}
 		}
 
@@ -322,6 +342,12 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 
 	case "return":
 		return rReturn, nil
+
+	case "break":
+		return rBreak, nil
+
+	case "continue":
+		return rContinue, nil
 
 	default:
 		return rError, fmt.Errorf("Unknown operation type: %s", o.OType)
