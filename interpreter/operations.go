@@ -204,7 +204,7 @@ func (o operation) evaluate(pv parentVariables) error {
 
 		thenOperations, ok := rawThen.([]any)
 		if !ok {
-			return fmt.Errorf("EXP[then]: %w", err)
+			return fmt.Errorf("`arguments/then` is not a list of expressions!")
 		}
 
 		rawElse, exists := arguments["else"]
@@ -214,7 +214,7 @@ func (o operation) evaluate(pv parentVariables) error {
 
 		elseOperations, ok := rawElse.([]any)
 		if !ok {
-			return fmt.Errorf("EXP[then]: %w", err)
+			return fmt.Errorf("`arguments/else` is not a list of expressions!")
 		}
 
 		if condition {
@@ -226,6 +226,48 @@ func (o operation) evaluate(pv parentVariables) error {
 			}
 		} else {
 			for _, op := range elseOperations {
+				err := evalAnyOperation(op, pv)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+
+	case "while":
+		arguments := o.OArguments
+
+		if arguments == nil {
+			return fmt.Errorf("`arguments` field missing!")
+		}
+
+		conditionExp, exists := arguments["condition"]
+		if !exists {
+			return fmt.Errorf("`arguments/condition` expression missing!")
+		}
+
+		rawOperations, exists := arguments["operations"]
+		if !exists {
+			return fmt.Errorf("`arguments/operations` expression missing!")
+		}
+
+		operations, ok := rawOperations.([]any)
+		if !ok {
+			return fmt.Errorf("`arguments/operations` is not a list of expressions!")
+		}
+
+		for {
+			condition, err := evalAnyExpression[bool](conditionExp, pv)
+			if err != nil {
+				return fmt.Errorf("EXP[arguments/condition]: %w", err)
+			}
+
+			if !condition {
+				break
+			}
+
+			for _, op := range operations {
 				err := evalAnyOperation(op, pv)
 				if err != nil {
 					return err
