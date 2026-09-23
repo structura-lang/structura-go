@@ -53,9 +53,13 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	}
 
 	for i, operation := range f.FOperations {
-		err := operation.evaluate(pv)
+		reason, err := operation.evaluate(pv)
 		if err != nil {
 			return nil, fmt.Errorf("OP[%d]: %w", i, err)
+		}
+
+		if reason != rDone {
+			return nil, fmt.Errorf("OP[%d]: Invalid return reason!", i)
 		}
 	}
 

@@ -12,255 +12,238 @@ type operation struct {
 	OArguments map[string]any `structura:"arguments"`
 }
 
-func (o operation) evaluate(pv parentVariables) error {
+type returnReason int
+
+const (
+	rDone returnReason = iota
+	rError
+)
+
+func (o operation) evaluate(pv parentVariables) (returnReason, error) {
+	arguments := o.OArguments
+
+	if arguments == nil {
+		return rError, fmt.Errorf("`arguments` field missing!")
+	}
+
 	switch o.OType {
 	case "store":
-		arguments := o.OArguments
-
-		if arguments == nil {
-			return fmt.Errorf("`arguments` field missing!")
-		}
-
 		valueExp, exists := arguments["value"]
 		if !exists {
-			return fmt.Errorf("`arguments/value` expression missing!")
+			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
 		value, err := evalAnyExpression[any](valueExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/value]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/value]: %w", err)
 		}
 
 		targetExp, exists := arguments["target_var"]
 		if !exists {
-			return fmt.Errorf("`arguments/target_var` expression missing!")
+			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
 		target, err := evalAnyExpression[string](targetExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
 
 		_, targetExists := pv.Variables[target]
 		if !targetExists {
-			return fmt.Errorf("Target variable does not exist!")
+			return rError, fmt.Errorf("Target variable does not exist!")
 		}
 
 		pv.Variables[target] = value
 
-		return nil
+		return rDone, nil
 
 	case "set":
-		arguments := o.OArguments
-
-		if arguments == nil {
-			return fmt.Errorf("`arguments` field missing!")
-		}
-
 		raw_value, vExists := arguments["value"]
 		if !vExists {
-			return fmt.Errorf("`arguments/value` expression missing!")
+			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
 		value, err := evalAnyExpression[any](raw_value, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[value]: %w", err)
+			return rError, fmt.Errorf("EXP[value]: %w", err)
 		}
 
 		raw_path, pExists := arguments["path"]
 		raw_index, iExists := arguments["index"]
 
 		if pExists && iExists {
-			return fmt.Errorf("`path` and `index` are mutually exclusive!")
+			return rError, fmt.Errorf("`path` and `index` are mutually exclusive!")
 		}
 
 		if !pExists && !iExists {
-			return fmt.Errorf("`path` or `index` expressions missing!")
+			return rError, fmt.Errorf("`path` or `index` expressions missing!")
 		}
 
 		targetExp, exists := arguments["target_var"]
 		if !exists {
-			return fmt.Errorf("`arguments/target_var` expression missing!")
+			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
 		target, err := evalAnyExpression[string](targetExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
 
 		// object is map
 		if pExists {
 			targetMap, ok := pv.Variables[target].(map[string]any)
 			if !ok {
-				return fmt.Errorf("Variable `target` is not a map!")
+				return rError, fmt.Errorf("Variable `target` is not a map!")
 			}
 
 			path, err := evalAnyExpression[[]any](raw_path, pv)
 			if err != nil {
-				return fmt.Errorf("EXP[path]: %w", err)
+				return rError, fmt.Errorf("EXP[path]: %w", err)
 			}
 
 			castPath, err := util.CastSlice[string](path)
 			if err != nil {
-				return fmt.Errorf("EXP[path]: %w", err)
+				return rError, fmt.Errorf("EXP[path]: %w", err)
 			}
 
 			ok = util.SetPath(targetMap, castPath, value)
 			if !ok {
-				return fmt.Errorf("Error setting value of variable %s at %s!", target, strings.Join(castPath, "/"))
+				return rError, fmt.Errorf("Error setting value of variable %s at %s!", target, strings.Join(castPath, "/"))
 			}
 
-			return nil
+			return rDone, nil
 		}
 
 		// object is array
 		if iExists {
 			targetArray, ok := pv.Variables[target].([]any)
 			if !ok {
-				return fmt.Errorf("Variable `target` is not an array!")
+				return rError, fmt.Errorf("Variable `target` is not an array!")
 			}
 
 			fIndex, err := evalAnyExpression[float64](raw_index, pv)
 			if err != nil {
-				return fmt.Errorf("EXP[index]: %w", err)
+				return rError, fmt.Errorf("EXP[index]: %w", err)
 			}
 
 			if !(fIndex == math.Trunc(fIndex)) {
-				return fmt.Errorf("EXP[index]: value is not an integer!")
+				return rError, fmt.Errorf("EXP[index]: value is not an integer!")
 			}
 
 			index := int(fIndex)
 
 			if index < 0 || index >= len(targetArray) {
-				return fmt.Errorf("EXP[index]: index out of range!")
+				return rError, fmt.Errorf("EXP[index]: index out of range!")
 			}
 
 			targetArray[index] = value
 
-			return nil
+			return rDone, nil
 		}
 
-		return fmt.Errorf("This error should be unreachable. How did you get here?")
+		return rError, fmt.Errorf("This error should be unreachable. How did you get here?")
 
 	case "append":
-		arguments := o.OArguments
-
-		if arguments == nil {
-			return fmt.Errorf("`arguments` field missing!")
-		}
-
 		valueExp, exists := arguments["value"]
 		if !exists {
-			return fmt.Errorf("`arguments/value` expression missing!")
+			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
 		value, err := evalAnyExpression[any](valueExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/value]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/value]: %w", err)
 		}
 
 		targetExp, exists := arguments["target_var"]
 		if !exists {
-			return fmt.Errorf("`arguments/target_var` expression missing!")
+			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
 		target, err := evalAnyExpression[string](targetExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/target_var]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
 
 		targetArray, ok := pv.Variables[target].([]any)
 		if !ok {
-			return fmt.Errorf("Variable `target` is not an array!")
+			return rError, fmt.Errorf("Variable `target` is not an array!")
 		}
 
 		targetArray = append(targetArray, value)
 
 		pv.Variables[target] = targetArray
 
-		return nil
+		return rDone, nil
 
 	case "if":
-		arguments := o.OArguments
-
-		if arguments == nil {
-			return fmt.Errorf("`arguments` field missing!")
-		}
-
 		conditionExp, exists := arguments["condition"]
 		if !exists {
-			return fmt.Errorf("`arguments/condition` expression missing!")
+			return rError, fmt.Errorf("`arguments/condition` expression missing!")
 		}
 
 		condition, err := evalAnyExpression[bool](conditionExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/condition]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/condition]: %w", err)
 		}
 
 		rawThen, exists := arguments["then"]
 		if !exists {
-			return fmt.Errorf("`arguments/then` expression missing!")
+			return rError, fmt.Errorf("`arguments/then` expression missing!")
 		}
 
 		thenOperations, ok := rawThen.([]any)
 		if !ok {
-			return fmt.Errorf("`arguments/then` is not a list of expressions!")
+			return rError, fmt.Errorf("`arguments/then` is not a list of expressions!")
 		}
 
 		rawElse, exists := arguments["else"]
 		if !exists {
-			return fmt.Errorf("`arguments/else` expression missing!")
+			return rError, fmt.Errorf("`arguments/else` expression missing!")
 		}
 
 		elseOperations, ok := rawElse.([]any)
 		if !ok {
-			return fmt.Errorf("`arguments/else` is not a list of expressions!")
+			return rError, fmt.Errorf("`arguments/else` is not a list of expressions!")
 		}
 
 		if condition {
 			for _, op := range thenOperations {
-				err := evalAnyOperation(op, pv)
+				_, err := evalAnyOperation(op, pv)
 				if err != nil {
-					return err
+					return rError, err
 				}
 			}
 		} else {
 			for _, op := range elseOperations {
-				err := evalAnyOperation(op, pv)
+				_, err := evalAnyOperation(op, pv)
 				if err != nil {
-					return err
+					return rError, err
 				}
 			}
 		}
 
-		return nil
+		return rDone, nil
 
 	case "while":
-		arguments := o.OArguments
-
-		if arguments == nil {
-			return fmt.Errorf("`arguments` field missing!")
-		}
-
 		conditionExp, exists := arguments["condition"]
 		if !exists {
-			return fmt.Errorf("`arguments/condition` expression missing!")
+			return rError, fmt.Errorf("`arguments/condition` expression missing!")
 		}
 
 		rawOperations, exists := arguments["operations"]
 		if !exists {
-			return fmt.Errorf("`arguments/operations` expression missing!")
+			return rError, fmt.Errorf("`arguments/operations` expression missing!")
 		}
 
 		operations, ok := rawOperations.([]any)
 		if !ok {
-			return fmt.Errorf("`arguments/operations` is not a list of expressions!")
+			return rError, fmt.Errorf("`arguments/operations` is not a list of expressions!")
 		}
 
 		for {
 			condition, err := evalAnyExpression[bool](conditionExp, pv)
 			if err != nil {
-				return fmt.Errorf("EXP[arguments/condition]: %w", err)
+				return rError, fmt.Errorf("EXP[arguments/condition]: %w", err)
 			}
 
 			if !condition {
@@ -268,40 +251,34 @@ func (o operation) evaluate(pv parentVariables) error {
 			}
 
 			for _, op := range operations {
-				err := evalAnyOperation(op, pv)
+				_, err := evalAnyOperation(op, pv)
 				if err != nil {
-					return err
+					return rError, err
 				}
 			}
 		}
 
-		return nil
+		return rDone, nil
 
 	case "for_each":
-		arguments := o.OArguments
-
-		if arguments == nil {
-			return fmt.Errorf("`arguments` field missing!")
-		}
-
 		inExp, exists := arguments["in"]
 		if !exists {
-			return fmt.Errorf("`arguments/in` expression missing!")
+			return rError, fmt.Errorf("`arguments/in` expression missing!")
 		}
 
 		in, err := evalAnyExpression[[]any](inExp, pv)
 		if err != nil {
-			return fmt.Errorf("EXP[arguments/in]: %w", err)
+			return rError, fmt.Errorf("EXP[arguments/in]: %w", err)
 		}
 
 		rawOperations, exists := arguments["operations"]
 		if !exists {
-			return fmt.Errorf("`arguments/operations` expression missing!")
+			return rError, fmt.Errorf("`arguments/operations` expression missing!")
 		}
 
 		operations, ok := rawOperations.([]any)
 		if !ok {
-			return fmt.Errorf("`arguments/operations` is not a list of expressions!")
+			return rError, fmt.Errorf("`arguments/operations` is not a list of expressions!")
 		}
 
 		for index, item := range in {
@@ -317,29 +294,29 @@ func (o operation) evaluate(pv parentVariables) error {
 			}
 
 			for _, op := range operations {
-				err := evalAnyOperation(op, newPv)
+				_, err := evalAnyOperation(op, newPv)
 				if err != nil {
-					return err
+					return rError, err
 				}
 			}
 		}
 
-		return nil
+		return rDone, nil
 
 	default:
-		return fmt.Errorf("Unknown operation type: %s", o.OType)
+		return rError, fmt.Errorf("Unknown operation type: %s", o.OType)
 	}
 }
 
-func evalAnyOperation(rawOp any, pv parentVariables) error {
+func evalAnyOperation(rawOp any, pv parentVariables) (returnReason, error) {
 	mapOp, ok := rawOp.(map[string]any)
 	if !ok {
-		return fmt.Errorf("Operation has the wrong type!")
+		return rError, fmt.Errorf("Operation has the wrong type!")
 	}
 
 	op, err := util.MapToStruct[operation](mapOp, "structura")
 	if err != nil {
-		return err
+		return rError, err
 	}
 
 	return op.evaluate(pv)
