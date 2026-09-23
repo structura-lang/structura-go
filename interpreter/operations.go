@@ -180,7 +180,76 @@ func (o operation) evaluate(pv parentVariables) error {
 
 		return nil
 
+	case "if":
+		arguments := o.OArguments
+
+		if arguments == nil {
+			return fmt.Errorf("`arguments` field missing!")
+		}
+
+		conditionExp, exists := arguments["condition"]
+		if !exists {
+			return fmt.Errorf("`arguments/condition` expression missing!")
+		}
+
+		condition, err := evalAnyExpression[bool](conditionExp, pv)
+		if err != nil {
+			return fmt.Errorf("EXP[arguments/condition]: %w", err)
+		}
+
+		rawThen, exists := arguments["then"]
+		if !exists {
+			return fmt.Errorf("`arguments/then` expression missing!")
+		}
+
+		thenOperations, ok := rawThen.([]any)
+		if !ok {
+			return fmt.Errorf("EXP[then]: %w", err)
+		}
+
+		rawElse, exists := arguments["else"]
+		if !exists {
+			return fmt.Errorf("`arguments/else` expression missing!")
+		}
+
+		elseOperations, ok := rawElse.([]any)
+		if !ok {
+			return fmt.Errorf("EXP[then]: %w", err)
+		}
+
+		if condition {
+			for _, op := range thenOperations {
+				err := evalAnyOperation(op, pv)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			for _, op := range elseOperations {
+				err := evalAnyOperation(op, pv)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+
 	default:
 		return fmt.Errorf("Unknown operation type: %s", o.OType)
 	}
+}
+
+func evalAnyOperation(rawOp any, pv parentVariables) error {
+	mapOp, ok := rawOp.(map[string]any)
+	if !ok {
+		return fmt.Errorf("Operation has the wrong type!")
+	}
+
+	op, err := util.MapToStruct[operation](mapOp, "structura")
+	if err != nil {
+		return err
+	}
+
+	return op.evaluate(pv)
 }
