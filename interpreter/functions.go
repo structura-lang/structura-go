@@ -75,11 +75,20 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	return eval, nil
 }
 
-func evalMapFunction(fn map[string]any, inputs map[string]any) (any, error) {
-	function, err := util.MapToStruct[function](fn, "structura")
-	if err != nil {
-		return nil, err
-	}
+func evalAnyFunction(fn any, inputs map[string]any) (any, error) {
+	if f, ok := fn.(function); ok {
+		return f.evaluate(inputs)
+	} else {
+		mapFn, ok := fn.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("Unsupported type %T, expected function or map[string]any", fn)
+		}
 
-	return function.evaluate(inputs)
+		f, err := util.MapToStruct[function](mapFn, "structura")
+		if err != nil {
+			return nil, fmt.Errorf("MapToStruct failed: %w", err)
+		}
+
+		return f.evaluate(inputs)
+	}
 }

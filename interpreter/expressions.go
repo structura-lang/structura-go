@@ -135,7 +135,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			return nil, fmt.Errorf("`function` expression missing!")
 		}
 
-		fn, err := evalAnyExpression[map[string]any](rawFunction, pv)
+		fn, err := evalAnyExpression[any](rawFunction, pv)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[function]: %w", err)
 		}
@@ -158,7 +158,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			inputs[input] = res
 		}
 
-		res, err := evalMapFunction(fn, inputs)
+		res, err := evalAnyFunction(fn, inputs)
 		if err != nil {
 			return nil, fmt.Errorf("FUNC[function]: %w", err)
 		}
