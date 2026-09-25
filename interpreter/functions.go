@@ -6,6 +6,7 @@ import (
 )
 
 type function struct {
+	FRuntime    RuntimeFunction
 	FInputs     []string              `structura:"inputs"`
 	FVariables  map[string]expression `structura:"variables"`
 	FOperations []operation           `structura:"operations"`
@@ -31,48 +32,56 @@ func (f function) evaluate(rd *runtimeData, inputs map[string]any) (any, error) 
 		iInputs[inputName] = input
 	}
 
-	inputsPV := parentVariables{
-		Inputs:    util.MakeCopy(iInputs),
-		Variables: map[string]any{},
-	}
+	if f.FRuntime != nil {
+		if (f.FVariables != nil || f.FOperations != nil || f.FOutput != expression{}) {
+			return nil, fmt.Errorf("Runtime functions cannot have `variables`, `operations`, or `output` set!")
+		}
 
-	var iVariables map[string]any = map[string]any{}
+		return f.FRuntime(iInputs)
+	} else {
+		inputsPV := parentVariables{
+			Inputs:    util.MakeCopy(iInputs),
+			Variables: map[string]any{},
+		}
 
-	for varName, varExp := range f.FVariables {
-		eval, err := varExp.evaluate(rd, inputsPV)
+		var iVariables map[string]any = map[string]any{}
+
+		for varName, varExp := range f.FVariables {
+			eval, err := varExp.evaluate(rd, inputsPV)
+			if err != nil {
+				return nil, fmt.Errorf("EXP[var:%s]: %w", varName, err)
+			}
+
+			iVariables[varName] = eval
+		}
+
+		pv := parentVariables{
+			Inputs:    util.MakeCopy(iInputs),
+			Variables: iVariables,
+		}
+
+		for i, operation := range f.FOperations {
+			reason, err := operation.evaluate(rd, pv)
+			if err != nil {
+				return nil, fmt.Errorf("OP[%d]: %w", i, err)
+			}
+
+			if reason == rReturn {
+				break
+			}
+
+			if reason != rDone {
+				return nil, fmt.Errorf("OP[%d]: Invalid return reason!", i)
+			}
+		}
+
+		eval, err := f.FOutput.evaluate(rd, pv)
 		if err != nil {
-			return nil, fmt.Errorf("EXP[var:%s]: %w", varName, err)
+			return nil, fmt.Errorf("EXP[out]: %w", err)
 		}
 
-		iVariables[varName] = eval
+		return eval, nil
 	}
-
-	pv := parentVariables{
-		Inputs:    util.MakeCopy(iInputs),
-		Variables: iVariables,
-	}
-
-	for i, operation := range f.FOperations {
-		reason, err := operation.evaluate(rd, pv)
-		if err != nil {
-			return nil, fmt.Errorf("OP[%d]: %w", i, err)
-		}
-
-		if reason == rReturn {
-			break
-		}
-
-		if reason != rDone {
-			return nil, fmt.Errorf("OP[%d]: Invalid return reason!", i)
-		}
-	}
-
-	eval, err := f.FOutput.evaluate(rd, pv)
-	if err != nil {
-		return nil, fmt.Errorf("EXP[out]: %w", err)
-	}
-
-	return eval, nil
 }
 
 func evalAnyFunction(fn any, rd *runtimeData, inputs map[string]any) (any, error) {

@@ -51,12 +51,17 @@ func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) 
 			return nil, fmt.Errorf("`data` field is not a string!")
 		}
 
-		rawValue, exists := rd.values[runtimeValueName]
-		if !exists {
-			return nil, fmt.Errorf("Runtime value %s is not defined!", runtimeValueName)
-		}
+		fn, exists := rd.functions[runtimeValueName]
+		if exists {
+			return fn, nil
+		} else {
+			rawValue, exists := rd.values[runtimeValueName]
+			if !exists {
+				return nil, fmt.Errorf("Runtime value %s is not defined!", runtimeValueName)
+			}
 
-		return util.MakeCopy(rawValue), nil
+			return util.MakeCopy(rawValue), nil
+		}
 
 	case "get":
 		data, ok := e.EData.(map[string]any)
