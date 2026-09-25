@@ -43,7 +43,7 @@ func main() {
 		log.Fatalf("failed to unmarshal into map: %v", err)
 	}
 
-	result, err := interpreter.Execute(p, d)
+	result, err := interpreter.Execute(p, d, nil)
 	if err != nil {
 		log.Fatal(fmt.Errorf("FUNC[main]: %w", err))
 	}

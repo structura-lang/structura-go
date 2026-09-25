@@ -12,7 +12,7 @@ type expression struct {
 	EData any    `structura:"data"`
 }
 
-func (e expression) evaluate(rpv parentVariables) (any, error) {
+func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) {
 	pv := util.MakeCopy(rpv)
 
 	switch e.EType {
@@ -45,6 +45,19 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 
 		return input, nil
 
+	case "runtime":
+		runtimeValueName, ok := e.EData.(string)
+		if !ok {
+			return nil, fmt.Errorf("`data` field is not a string!")
+		}
+
+		rawValue, exists := rd.values[runtimeValueName]
+		if !exists {
+			return nil, fmt.Errorf("Runtime value %s is not defined!", runtimeValueName)
+		}
+
+		return util.MakeCopy(rawValue), nil
+
 	case "get":
 		data, ok := e.EData.(map[string]any)
 		if !ok {
@@ -56,7 +69,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			return nil, fmt.Errorf("`from` expression missing!")
 		}
 
-		from, err := evalAnyExpression[any](raw_from, pv)
+		from, err := evalAnyExpression[any](raw_from, rd, pv)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[from]: %w", err)
 		}
@@ -79,7 +92,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 				return nil, fmt.Errorf("`from` expression returned invalid type!")
 			}
 
-			path, err := evalAnyExpression[[]any](raw_path, pv)
+			path, err := evalAnyExpression[[]any](raw_path, rd, pv)
 			if err != nil {
 				return nil, fmt.Errorf("EXP[path]: %w", err)
 			}
@@ -104,7 +117,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 				return nil, fmt.Errorf("`from` expression returned invalid type!")
 			}
 
-			fIndex, err := evalAnyExpression[float64](raw_index, pv)
+			fIndex, err := evalAnyExpression[float64](raw_index, rd, pv)
 			if err != nil {
 				return nil, fmt.Errorf("EXP[index]: %w", err)
 			}
@@ -135,7 +148,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			return nil, fmt.Errorf("`function` expression missing!")
 		}
 
-		fn, err := evalAnyExpression[any](rawFunction, pv)
+		fn, err := evalAnyExpression[any](rawFunction, rd, pv)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[function]: %w", err)
 		}
@@ -150,7 +163,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 		var inputs map[string]any = map[string]any{}
 
 		for input, exp := range inputExpressions {
-			res, err := evalAnyExpression[any](exp, pv)
+			res, err := evalAnyExpression[any](exp, rd, pv)
 			if err != nil {
 				return nil, fmt.Errorf("EXP[inputs_from]: %w", err)
 			}
@@ -158,7 +171,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 			inputs[input] = res
 		}
 
-		res, err := evalAnyFunction(fn, inputs)
+		res, err := evalAnyFunction(fn, rd, inputs)
 		if err != nil {
 			return nil, fmt.Errorf("FUNC[function]: %w", err)
 		}
@@ -193,7 +206,7 @@ func (e expression) evaluate(rpv parentVariables) (any, error) {
 	}
 }
 
-func evalAnyExpression[T any](rawExp any, pv parentVariables) (T, error) {
+func evalAnyExpression[T any](rawExp any, rd *runtimeData, pv parentVariables) (T, error) {
 	var null T
 
 	mapExp, ok := rawExp.(map[string]any)
@@ -206,7 +219,7 @@ func evalAnyExpression[T any](rawExp any, pv parentVariables) (T, error) {
 		return null, err
 	}
 
-	eval, err := exp.evaluate(pv)
+	eval, err := exp.evaluate(rd, pv)
 	if err != nil {
 		return null, err
 	}

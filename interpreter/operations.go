@@ -22,7 +22,7 @@ const (
 	rContinue
 )
 
-func (o operation) evaluate(pv parentVariables) (returnReason, error) {
+func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, error) {
 	arguments := o.OArguments
 
 	if arguments == nil {
@@ -36,7 +36,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
-		value, err := evalAnyExpression[any](valueExp, pv)
+		value, err := evalAnyExpression[any](valueExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/value]: %w", err)
 		}
@@ -46,7 +46,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
-		target, err := evalAnyExpression[string](targetExp, pv)
+		target, err := evalAnyExpression[string](targetExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
@@ -66,7 +66,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
-		value, err := evalAnyExpression[any](raw_value, pv)
+		value, err := evalAnyExpression[any](raw_value, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[value]: %w", err)
 		}
@@ -87,7 +87,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
-		target, err := evalAnyExpression[string](targetExp, pv)
+		target, err := evalAnyExpression[string](targetExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
@@ -99,7 +99,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 				return rError, fmt.Errorf("Variable `target` is not a map!")
 			}
 
-			path, err := evalAnyExpression[[]any](raw_path, pv)
+			path, err := evalAnyExpression[[]any](raw_path, rd, pv)
 			if err != nil {
 				return rError, fmt.Errorf("EXP[path]: %w", err)
 			}
@@ -124,7 +124,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 				return rError, fmt.Errorf("Variable `target` is not an array!")
 			}
 
-			fIndex, err := evalAnyExpression[float64](raw_index, pv)
+			fIndex, err := evalAnyExpression[float64](raw_index, rd, pv)
 			if err != nil {
 				return rError, fmt.Errorf("EXP[index]: %w", err)
 			}
@@ -152,7 +152,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
-		value, err := evalAnyExpression[any](valueExp, pv)
+		value, err := evalAnyExpression[any](valueExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/value]: %w", err)
 		}
@@ -162,7 +162,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
 		}
 
-		target, err := evalAnyExpression[string](targetExp, pv)
+		target, err := evalAnyExpression[string](targetExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
 		}
@@ -184,7 +184,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/condition` expression missing!")
 		}
 
-		condition, err := evalAnyExpression[bool](conditionExp, pv)
+		condition, err := evalAnyExpression[bool](conditionExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/condition]: %w", err)
 		}
@@ -211,7 +211,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 
 		if condition {
 			for _, op := range thenOperations {
-				reason, err := evalAnyOperation(op, pv)
+				reason, err := evalAnyOperation(op, rd, pv)
 				if err != nil {
 					return rError, err
 				}
@@ -222,7 +222,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			}
 		} else {
 			for _, op := range elseOperations {
-				reason, err := evalAnyOperation(op, pv)
+				reason, err := evalAnyOperation(op, rd, pv)
 				if err != nil {
 					return rError, err
 				}
@@ -253,7 +253,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 
 	outer_while:
 		for {
-			condition, err := evalAnyExpression[bool](conditionExp, pv)
+			condition, err := evalAnyExpression[bool](conditionExp, rd, pv)
 			if err != nil {
 				return rError, fmt.Errorf("EXP[arguments/condition]: %w", err)
 			}
@@ -263,7 +263,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			}
 
 			for _, op := range operations {
-				reason, err := evalAnyOperation(op, pv)
+				reason, err := evalAnyOperation(op, rd, pv)
 				if err != nil {
 					return rError, err
 				}
@@ -290,7 +290,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			return rError, fmt.Errorf("`arguments/in` expression missing!")
 		}
 
-		in, err := evalAnyExpression[[]any](inExp, pv)
+		in, err := evalAnyExpression[[]any](inExp, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[arguments/in]: %w", err)
 		}
@@ -319,7 +319,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 			}
 
 			for _, op := range operations {
-				reason, err := evalAnyOperation(op, newPv)
+				reason, err := evalAnyOperation(op, rd, newPv)
 				if err != nil {
 					return rError, err
 				}
@@ -354,7 +354,7 @@ func (o operation) evaluate(pv parentVariables) (returnReason, error) {
 	}
 }
 
-func evalAnyOperation(rawOp any, pv parentVariables) (returnReason, error) {
+func evalAnyOperation(rawOp any, rd *runtimeData, pv parentVariables) (returnReason, error) {
 	mapOp, ok := rawOp.(map[string]any)
 	if !ok {
 		return rError, fmt.Errorf("Operation has the wrong type!")
@@ -365,5 +365,5 @@ func evalAnyOperation(rawOp any, pv parentVariables) (returnReason, error) {
 		return rError, err
 	}
 
-	return op.evaluate(pv)
+	return op.evaluate(rd, pv)
 }

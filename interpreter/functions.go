@@ -18,7 +18,7 @@ type parentVariables struct {
 	Other     map[string]any
 }
 
-func (f function) evaluate(inputs map[string]any) (any, error) {
+func (f function) evaluate(rd *runtimeData, inputs map[string]any) (any, error) {
 	var iInputs map[string]any = map[string]any{}
 
 	// validate inputs
@@ -39,7 +39,7 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	var iVariables map[string]any = map[string]any{}
 
 	for varName, varExp := range f.FVariables {
-		eval, err := varExp.evaluate(inputsPV)
+		eval, err := varExp.evaluate(rd, inputsPV)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[var:%s]: %w", varName, err)
 		}
@@ -53,7 +53,7 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	}
 
 	for i, operation := range f.FOperations {
-		reason, err := operation.evaluate(pv)
+		reason, err := operation.evaluate(rd, pv)
 		if err != nil {
 			return nil, fmt.Errorf("OP[%d]: %w", i, err)
 		}
@@ -67,7 +67,7 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 		}
 	}
 
-	eval, err := f.FOutput.evaluate(pv)
+	eval, err := f.FOutput.evaluate(rd, pv)
 	if err != nil {
 		return nil, fmt.Errorf("EXP[out]: %w", err)
 	}
@@ -75,9 +75,9 @@ func (f function) evaluate(inputs map[string]any) (any, error) {
 	return eval, nil
 }
 
-func evalAnyFunction(fn any, inputs map[string]any) (any, error) {
+func evalAnyFunction(fn any, rd *runtimeData, inputs map[string]any) (any, error) {
 	if f, ok := fn.(function); ok {
-		return f.evaluate(inputs)
+		return f.evaluate(rd, inputs)
 	} else {
 		mapFn, ok := fn.(map[string]any)
 		if !ok {
@@ -89,6 +89,6 @@ func evalAnyFunction(fn any, inputs map[string]any) (any, error) {
 			return nil, fmt.Errorf("MapToStruct failed: %w", err)
 		}
 
-		return f.evaluate(inputs)
+		return f.evaluate(rd, inputs)
 	}
 }
