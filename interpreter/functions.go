@@ -37,28 +37,25 @@ func (f function) evaluate(rd *runtimeData, inputs map[string]any) (any, error) 
 			return nil, fmt.Errorf("Runtime functions cannot have `variables`, `operations`, or `output` set!")
 		}
 
-		return f.FRuntime(iInputs)
+		return f.FRuntime(util.MakeCopy(iInputs)) // copy input, in case function mutates it
 	} else {
-		inputsPV := parentVariables{
-			Inputs:    util.MakeCopy(iInputs),
+		pv := parentVariables{
+			Inputs:    iInputs,
 			Variables: map[string]any{},
 		}
 
 		var iVariables map[string]any = map[string]any{}
 
 		for varName, varExp := range f.FVariables {
-			eval, err := varExp.evaluate(rd, inputsPV)
+			eval, err := varExp.evaluate(rd, pv)
 			if err != nil {
 				return nil, fmt.Errorf("EXP[var:%s]: %w", varName, err)
 			}
 
-			iVariables[varName] = eval
+			iVariables[varName] = util.MakeCopy(eval)
 		}
 
-		pv := parentVariables{
-			Inputs:    util.MakeCopy(iInputs),
-			Variables: iVariables,
-		}
+		pv.Variables = iVariables
 
 		for i, operation := range f.FOperations {
 			reason, err := operation.evaluate(rd, pv)

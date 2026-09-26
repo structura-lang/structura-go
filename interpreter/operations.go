@@ -56,23 +56,23 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 			return rError, fmt.Errorf("Target variable does not exist!")
 		}
 
-		pv.Variables[target] = value
+		pv.Variables[target] = util.MakeCopy(value)
 
 		return rDone, nil
 
 	case "set":
-		raw_value, vExists := arguments["value"]
+		rawValue, vExists := arguments["value"]
 		if !vExists {
 			return rError, fmt.Errorf("`arguments/value` expression missing!")
 		}
 
-		value, err := evalAnyExpression[any](raw_value, rd, pv)
+		value, err := evalAnyExpression[any](rawValue, rd, pv)
 		if err != nil {
 			return rError, fmt.Errorf("EXP[value]: %w", err)
 		}
 
-		raw_path, pExists := arguments["path"]
-		raw_index, iExists := arguments["index"]
+		rawPath, pExists := arguments["path"]
+		rawIndex, iExists := arguments["index"]
 
 		if pExists && iExists {
 			return rError, fmt.Errorf("`path` and `index` are mutually exclusive!")
@@ -99,7 +99,7 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 				return rError, fmt.Errorf("Variable `target` is not a map!")
 			}
 
-			path, err := evalAnyExpression[[]any](raw_path, rd, pv)
+			path, err := evalAnyExpression[[]any](rawPath, rd, pv)
 			if err != nil {
 				return rError, fmt.Errorf("EXP[path]: %w", err)
 			}
@@ -109,7 +109,7 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 				return rError, fmt.Errorf("EXP[path]: %w", err)
 			}
 
-			ok = util.SetPath(targetMap, castPath, value)
+			ok = util.SetPath(targetMap, castPath, util.MakeCopy(value))
 			if !ok {
 				return rError, fmt.Errorf("Error setting value of variable %s at %s!", target, strings.Join(castPath, "/"))
 			}
@@ -124,7 +124,7 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 				return rError, fmt.Errorf("Variable `target` is not an array!")
 			}
 
-			fIndex, err := evalAnyExpression[float64](raw_index, rd, pv)
+			fIndex, err := evalAnyExpression[float64](rawIndex, rd, pv)
 			if err != nil {
 				return rError, fmt.Errorf("EXP[index]: %w", err)
 			}
@@ -139,7 +139,7 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 				return rError, fmt.Errorf("EXP[index]: index out of range!")
 			}
 
-			targetArray[index] = value
+			targetArray[index] = util.MakeCopy(value)
 
 			return rDone, nil
 		}
@@ -172,7 +172,7 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 			return rError, fmt.Errorf("Variable `target` is not an array!")
 		}
 
-		targetArray = append(targetArray, value)
+		targetArray = append(targetArray, util.MakeCopy(value))
 
 		pv.Variables[target] = targetArray
 

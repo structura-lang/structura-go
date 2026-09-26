@@ -12,9 +12,7 @@ type expression struct {
 	EData any    `structura:"data"`
 }
 
-func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) {
-	pv := util.MakeCopy(rpv)
-
+func (e expression) evaluate(rd *runtimeData, pv parentVariables) (any, error) {
 	switch e.EType {
 	case "literal":
 		return e.EData, nil
@@ -60,7 +58,7 @@ func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) 
 				return nil, fmt.Errorf("Runtime value %s is not defined!", runtimeValueName)
 			}
 
-			return util.MakeCopy(rawValue), nil
+			return rawValue, nil
 		}
 
 	case "get":
@@ -69,18 +67,18 @@ func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) 
 			return nil, fmt.Errorf("`data` field is not a map!")
 		}
 
-		raw_from, exists := data["from"]
+		rawFrom, exists := data["from"]
 		if !exists {
 			return nil, fmt.Errorf("`from` expression missing!")
 		}
 
-		from, err := evalAnyExpression[any](raw_from, rd, pv)
+		from, err := evalAnyExpression[any](rawFrom, rd, pv)
 		if err != nil {
 			return nil, fmt.Errorf("EXP[from]: %w", err)
 		}
 
-		raw_path, pExists := data["path"]
-		raw_index, iExists := data["index"]
+		rawPath, pExists := data["path"]
+		rawIndex, iExists := data["index"]
 
 		if pExists && iExists {
 			return nil, fmt.Errorf("`path` and `index` are mutually exclusive!")
@@ -97,7 +95,7 @@ func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) 
 				return nil, fmt.Errorf("`from` expression returned invalid type!")
 			}
 
-			path, err := evalAnyExpression[[]any](raw_path, rd, pv)
+			path, err := evalAnyExpression[[]any](rawPath, rd, pv)
 			if err != nil {
 				return nil, fmt.Errorf("EXP[path]: %w", err)
 			}
@@ -122,7 +120,7 @@ func (e expression) evaluate(rd *runtimeData, rpv parentVariables) (any, error) 
 				return nil, fmt.Errorf("`from` expression returned invalid type!")
 			}
 
-			fIndex, err := evalAnyExpression[float64](raw_index, rd, pv)
+			fIndex, err := evalAnyExpression[float64](rawIndex, rd, pv)
 			if err != nil {
 				return nil, fmt.Errorf("EXP[index]: %w", err)
 			}
