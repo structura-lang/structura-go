@@ -12,7 +12,7 @@ type expression struct {
 	EData any    `structura:"data"`
 }
 
-func (e expression) evaluate(rd *runtimeData, pv parentVariables) (any, error) {
+func (e expression) evaluate(rd *RuntimeData, pv parentVariables) (any, error) {
 	switch e.EType {
 	case "literal":
 		return e.EData, nil
@@ -209,7 +209,7 @@ func (e expression) evaluate(rd *runtimeData, pv parentVariables) (any, error) {
 	}
 }
 
-func evalAnyExpression[T any](rawExp any, rd *runtimeData, pv parentVariables) (T, error) {
+func evalAnyExpression[T any](rawExp any, rd *RuntimeData, pv parentVariables) (T, error) {
 	var null T
 
 	mapExp, ok := rawExp.(map[string]any)

@@ -1,6 +1,6 @@
 package interpreter
 
-func Execute(program map[string]any, inputs map[string]any, rd *runtimeData) (any, error) {
+func Execute(program map[string]any, inputs map[string]any, rd *RuntimeData) (any, error) {
 	if rd == nil {
 		rd = NewRuntime()
 	}

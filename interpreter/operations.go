@@ -23,7 +23,7 @@ const (
 	rContinue
 )
 
-func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, error) {
+func (o operation) evaluate(rd *RuntimeData, pv parentVariables) (returnReason, error) {
 	arguments := o.OArguments
 
 	if arguments == nil {
@@ -433,7 +433,7 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 	}
 }
 
-func evalAnyOperation(rawOp any, rd *runtimeData, pv parentVariables) (returnReason, error) {
+func evalAnyOperation(rawOp any, rd *RuntimeData, pv parentVariables) (returnReason, error) {
 	mapOp, ok := rawOp.(map[string]any)
 	if !ok {
 		return rError, fmt.Errorf("Operation has the wrong type!")

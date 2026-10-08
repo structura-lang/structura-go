@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"structura/builtins"
 	"structura/interpreter"
 )
 
@@ -43,7 +44,11 @@ func main() {
 		log.Fatalf("failed to unmarshal into map: %v", err)
 	}
 
-	result, err := interpreter.Execute(p, d, nil)
+	rd := interpreter.NewRuntime()
+
+	builtins.RegisterAll(rd)
+
+	result, err := interpreter.Execute(p, d, rd)
 	if err != nil {
 		log.Fatal(fmt.Errorf("FUNC[main]: %w", err))
 	}

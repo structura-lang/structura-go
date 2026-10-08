@@ -19,7 +19,7 @@ type parentVariables struct {
 	Other     map[string]any
 }
 
-func (f function) evaluate(rd *runtimeData, inputs map[string]any) (any, error) {
+func (f function) evaluate(rd *RuntimeData, inputs map[string]any) (any, error) {
 	var iInputs map[string]any = map[string]any{}
 
 	// validate inputs
@@ -81,7 +81,7 @@ func (f function) evaluate(rd *runtimeData, inputs map[string]any) (any, error) 
 	}
 }
 
-func evalAnyFunction(fn any, rd *runtimeData, inputs map[string]any) (any, error) {
+func evalAnyFunction(fn any, rd *RuntimeData, inputs map[string]any) (any, error) {
 	if f, ok := fn.(function); ok {
 		return f.evaluate(rd, inputs)
 	} else {
