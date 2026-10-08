@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"structura/interpreter/util"
 )
@@ -177,6 +178,84 @@ func (o operation) evaluate(rd *runtimeData, pv parentVariables) (returnReason, 
 		pv.Variables[target] = targetArray
 
 		return rDone, nil
+
+	case "remove":
+		rawPath, pExists := arguments["path"]
+		rawIndex, iExists := arguments["index"]
+
+		if pExists && iExists {
+			return rError, fmt.Errorf("`path` and `index` are mutually exclusive!")
+		}
+
+		if !pExists && !iExists {
+			return rError, fmt.Errorf("`path` or `index` expressions missing!")
+		}
+
+		targetExp, exists := arguments["target_var"]
+		if !exists {
+			return rError, fmt.Errorf("`arguments/target_var` expression missing!")
+		}
+
+		target, err := evalAnyExpression[string](targetExp, rd, pv)
+		if err != nil {
+			return rError, fmt.Errorf("EXP[arguments/target_var]: %w", err)
+		}
+
+		// object is map
+		if pExists {
+			targetMap, ok := pv.Variables[target].(map[string]any)
+			if !ok {
+				return rError, fmt.Errorf("Variable `target` is not a map!")
+			}
+
+			path, err := evalAnyExpression[[]any](rawPath, rd, pv)
+			if err != nil {
+				return rError, fmt.Errorf("EXP[path]: %w", err)
+			}
+
+			castPath, err := util.CastSlice[string](path)
+			if err != nil {
+				return rError, fmt.Errorf("EXP[path]: %w", err)
+			}
+
+			ok = util.DeletePath(targetMap, castPath)
+			if !ok {
+				return rError, fmt.Errorf("Error removing value of variable %s at %s!", target, strings.Join(castPath, "/"))
+			}
+
+			return rDone, nil
+		}
+
+		// object is array
+		if iExists {
+			targetArray, ok := pv.Variables[target].([]any)
+			if !ok {
+				return rError, fmt.Errorf("Variable `target` is not an array!")
+			}
+
+			fIndex, err := evalAnyExpression[float64](rawIndex, rd, pv)
+			if err != nil {
+				return rError, fmt.Errorf("EXP[index]: %w", err)
+			}
+
+			if !(fIndex == math.Trunc(fIndex)) {
+				return rError, fmt.Errorf("EXP[index]: value is not an integer!")
+			}
+
+			index := int(fIndex)
+
+			if index < 0 || index >= len(targetArray) {
+				return rError, fmt.Errorf("EXP[index]: index out of range!")
+			}
+
+			newArray := slices.Delete(targetArray, index, index+1)
+
+			pv.Variables[target] = newArray
+
+			return rDone, nil
+		}
+
+		return rError, fmt.Errorf("This error should be unreachable. How did you get here?")
 
 	case "if":
 		conditionExp, exists := arguments["condition"]

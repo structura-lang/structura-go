@@ -46,5 +46,30 @@ func SetPath(m map[string]any, path []string, value any) bool {
 
 	leafKey := path[len(path)-1]
 	parentMap[leafKey] = value
+
+	return true
+}
+
+func DeletePath(m map[string]any, p []string) bool {
+	if len(p) == 0 {
+		return false
+	}
+
+	cur := m
+
+	for _, key := range p[:len(p)-1] {
+		next, ok := cur[key].(map[string]any)
+		if !ok {
+			return false
+		}
+		cur = next
+	}
+
+	last := p[len(p)-1]
+	if _, ok := cur[last]; !ok {
+		return false
+	}
+
+	delete(cur, last)
 	return true
 }
