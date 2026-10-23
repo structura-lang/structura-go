@@ -13,7 +13,7 @@ func add(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
@@ -37,7 +37,7 @@ func subtract(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
@@ -61,7 +61,7 @@ func multiply(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
@@ -85,7 +85,7 @@ func divide(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
@@ -109,7 +109,7 @@ func lessThan(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
@@ -133,7 +133,7 @@ func greaterThan(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
@@ -157,7 +157,7 @@ func equal(inputs map[string]any) (any, error) {
 		return nil, fmt.Errorf("Input `a` has the wrong type")
 	}
 
-	rawB, ok := inputs["b"].(float64)
+	rawB, ok := inputs["b"]
 	if !ok {
 		return nil, fmt.Errorf("Input `b` missing")
 	}
