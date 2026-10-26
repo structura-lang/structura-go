@@ -98,6 +98,35 @@ func divide(inputs map[string]any) (any, error) {
 	return a / b, nil
 }
 
+func modulo(inputs map[string]any) (any, error) {
+	rawA, ok := inputs["a"]
+	if !ok {
+		return nil, fmt.Errorf("Input `a` missing")
+	}
+
+	a, ok := toInt(rawA)
+	if !ok {
+		return nil, fmt.Errorf("Input `a` has the wrong type")
+	}
+
+	rawB, ok := inputs["b"]
+	if !ok {
+		return nil, fmt.Errorf("Input `b` missing")
+	}
+
+	b, ok := toInt(rawB)
+	if !ok {
+		return nil, fmt.Errorf("Input `b` has the wrong type")
+	}
+
+	result, ok := toFloat64(a % b)
+	if !ok {
+		return nil, fmt.Errorf("Modulo result has the wrong type")
+	}
+
+	return result, nil
+}
+
 func lessThan(inputs map[string]any) (any, error) {
 	rawA, ok := inputs["a"]
 	if !ok {
@@ -146,7 +175,7 @@ func greaterThan(inputs map[string]any) (any, error) {
 	return a > b, nil
 }
 
-func equal(inputs map[string]any) (any, error) {
+func mathEqual(inputs map[string]any) (any, error) {
 	rawA, ok := inputs["a"]
 	if !ok {
 		return nil, fmt.Errorf("Input `a` missing")

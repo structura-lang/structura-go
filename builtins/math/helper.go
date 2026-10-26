@@ -10,3 +10,14 @@ func toFloat64(v any) (float64, bool) {
 		return 0, false
 	}
 }
+
+func toInt(v any) (int, bool) {
+	switch n := v.(type) {
+	case int:
+		return n, true
+	case float64:
+		return int(n), true
+	default:
+		return 0, false
+	}
+}

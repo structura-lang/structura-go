@@ -10,3 +10,17 @@ func length(inputs map[string]any) (any, error) {
 
 	return len(arr), nil
 }
+
+func equal(inputs map[string]any) (any, error) {
+	a, ok := inputs["a"]
+	if !ok {
+		return nil, fmt.Errorf("Input `a` missing")
+	}
+
+	b, ok := inputs["b"]
+	if !ok {
+		return nil, fmt.Errorf("Input `b` missing")
+	}
+
+	return a == b, nil
+}
