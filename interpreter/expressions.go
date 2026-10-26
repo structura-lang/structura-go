@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"strings"
 	"structura/interpreter/util"
 )
@@ -229,7 +230,14 @@ func evalAnyExpression[T any](rawExp any, rd *RuntimeData, pv parentVariables) (
 
 	result, ok := eval.(T)
 	if !ok {
-		return null, fmt.Errorf("Expression returned the wrong type!")
+		if eval == nil {
+			return null, nil
+		}
+
+		expected := reflect.TypeFor[T]()
+		actual := reflect.TypeOf(eval)
+
+		return null, fmt.Errorf("Expression returned the wrong type: expected %v, got %v!", expected, actual)
 	}
 
 	return result, nil

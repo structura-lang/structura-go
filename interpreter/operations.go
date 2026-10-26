@@ -289,10 +289,10 @@ func (o operation) evaluate(rd *RuntimeData, pv parentVariables) (returnReason, 
 		}
 
 		if condition {
-			for _, op := range thenOperations {
+			for i, op := range thenOperations {
 				reason, err := evalAnyOperation(op, rd, pv)
 				if err != nil {
-					return rError, err
+					return rError, fmt.Errorf("OP[%d]: %w", i, err)
 				}
 
 				if reason != rDone {
@@ -300,10 +300,10 @@ func (o operation) evaluate(rd *RuntimeData, pv parentVariables) (returnReason, 
 				}
 			}
 		} else {
-			for _, op := range elseOperations {
+			for i, op := range elseOperations {
 				reason, err := evalAnyOperation(op, rd, pv)
 				if err != nil {
-					return rError, err
+					return rError, fmt.Errorf("OP[%d]: %w", i, err)
 				}
 
 				if reason != rDone {
@@ -341,10 +341,10 @@ func (o operation) evaluate(rd *RuntimeData, pv parentVariables) (returnReason, 
 				break
 			}
 
-			for _, op := range operations {
+			for i, op := range operations {
 				reason, err := evalAnyOperation(op, rd, pv)
 				if err != nil {
-					return rError, err
+					return rError, fmt.Errorf("OP[%d]: %w", i, err)
 				}
 
 				if reason == rReturn {
@@ -397,10 +397,10 @@ func (o operation) evaluate(rd *RuntimeData, pv parentVariables) (returnReason, 
 				},
 			}
 
-			for _, op := range operations {
+			for i, op := range operations {
 				reason, err := evalAnyOperation(op, rd, newPv)
 				if err != nil {
-					return rError, err
+					return rError, fmt.Errorf("OP[%d: %w", i, err)
 				}
 
 				if reason == rReturn {
